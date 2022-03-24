@@ -1,0 +1,24 @@
+﻿{
+  "navigationFallback": {
+    "rewrite": "index.html"
+  },
+  "mimeTypes": {
+    ".json": "text/json"
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "allowedRoles": [ "authenticated" ]
+    }
+  ],
+  "auth": {
+    "identityProviders": {
+      "google": {
+        "registration": {
+          "clientIdSettingName": "GOOGLE_CLIENT_ID",
+          "clientSecretSettingName": "GOOGLE_CLIENT_SECRET"
+        }
+      }
+    }
+  }
+}
