@@ -1,4 +1,4 @@
-using FamKit;
+using FamKit.Web;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
