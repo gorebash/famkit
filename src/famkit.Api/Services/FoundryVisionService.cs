@@ -10,29 +10,25 @@ namespace famkit.Services;
 
 public class FoundryVisionService
 {
-    private const string SystemPrompt =
-        "You are a kitchen inventory assistant. Look at the photo of a fridge or pantry and identify every " +
-        "distinct food item you can see. Respond with ONLY a JSON array (no markdown, no commentary) where each " +
-        "element has the shape: {\"name\": string, \"estimatedQuantity\": string, \"category\": \"fridge\"|\"pantry\"}. " +
-        "Use short, common ingredient names (e.g. \"milk\", \"cheddar cheese\", \"eggs\").\n\n" +
-        "You must always give your best estimate for estimatedQuantity — never leave it blank or null. Look at " +
-        "the physical evidence in the photo and reason about it the same way a person glancing in the fridge would:\n" +
-        "- Countable items: count them (\"3\", \"6 eggs\", \"2 bell peppers\").\n" +
-        "- Packaged items where you can't see inside: guess from the package's typical size (\"1 gallon\", \"1 dozen\", \"1 lb block\", \"12 oz bottle\").\n" +
-        "- Open containers or produce in bulk: judge how full or how much is left (\"about half full\", \"nearly empty\", \"a few handfuls\").\n" +
-        "A rough, clearly-labeled guess (e.g. \"looks about half full\") is far more useful than no answer at all. " +
-        "Only fall back to \"unknown\" in the rare case where the item is almost entirely hidden or obscured.\n\n" +
-        "Example response:\n" +
-        "[{\"name\": \"milk\", \"estimatedQuantity\": \"half gallon, about 3/4 full\", \"category\": \"fridge\"}, " +
-        "{\"name\": \"eggs\", \"estimatedQuantity\": \"6 remaining\", \"category\": \"fridge\"}, " +
-        "{\"name\": \"ketchup\", \"estimatedQuantity\": \"1 bottle, nearly full\", \"category\": \"pantry\"}]";
+    private const string PromptFileName = "vision-system-prompt.txt";
 
     private readonly ChatClient? _chatClient;
     private readonly ILogger<FoundryVisionService> _logger;
+    private readonly string? _systemPrompt;
 
     public FoundryVisionService(IConfiguration configuration, ILogger<FoundryVisionService> logger)
     {
         _logger = logger;
+
+        var promptPath = Path.Combine(AppContext.BaseDirectory, "Prompts", PromptFileName);
+        try
+        {
+            _systemPrompt = File.ReadAllText(promptPath);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogWarning(ex, "Could not read vision system prompt from {PromptPath}; vision identification will fail until it's available.", promptPath);
+        }
 
         var endpoint = configuration["Foundry:Endpoint"];
         var apiKey = configuration["Foundry:ApiKey"];
@@ -55,9 +51,14 @@ public class FoundryVisionService
             throw new InvalidOperationException("Foundry vision client is not configured. Set Foundry:Endpoint, Foundry:ApiKey and Foundry:DeploymentName in local.settings.json.");
         }
 
+        if (_systemPrompt is null)
+        {
+            throw new InvalidOperationException($"Vision system prompt could not be loaded from Prompts/{PromptFileName}.");
+        }
+
         List<ChatMessage> messages =
         [
-            new SystemChatMessage(SystemPrompt),
+            new SystemChatMessage(_systemPrompt),
             new UserChatMessage(
                 ChatMessageContentPart.CreateTextPart("Identify the food items in this photo."),
                 ChatMessageContentPart.CreateImagePart(imageBytes, mediaType)
