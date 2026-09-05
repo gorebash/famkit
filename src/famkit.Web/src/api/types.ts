@@ -16,12 +16,19 @@ export interface RecipeIngredient {
   unit?: string | null
 }
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'any'
+export type PrepTime = 'quick' | 'standard'
+
 export interface Recipe {
   id: string
   title: string
   ingredients: RecipeIngredient[]
   instructions?: string | null
   sourceUrl?: string | null
+  imageUrl?: string | null
+  mealType: MealType
+  prepTime: PrepTime
+  spoonacularId?: number | null
   createdDate: string
 }
 

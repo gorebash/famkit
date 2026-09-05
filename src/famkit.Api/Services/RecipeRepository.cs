@@ -45,6 +45,10 @@ public class RecipeRepository
             Title = request.Title,
             Instructions = request.Instructions,
             SourceUrl = request.SourceUrl,
+            ImageUrl = request.ImageUrl,
+            MealType = MealTypes.IsValid(request.MealType) ? request.MealType! : MealTypes.Any,
+            PrepTime = PrepTimes.IsValid(request.PrepTime) ? request.PrepTime! : PrepTimes.Standard,
+            SpoonacularId = request.SpoonacularId,
         };
         recipe.SetIngredients(request.Ingredients);
         await _table.AddEntityAsync(recipe);

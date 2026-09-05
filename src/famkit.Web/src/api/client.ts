@@ -5,6 +5,8 @@ import type {
   IdentifyResponse,
   IngredientDiffResult,
   MealPlanResponse,
+  MealType,
+  PrepTime,
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7071/api'
@@ -43,11 +45,25 @@ export const api = {
 
   getRecipes: () => request<Recipe[]>('/recipes'),
 
-  addRecipe: (recipe: { title: string; ingredients: RecipeIngredient[]; instructions?: string; sourceUrl?: string }) =>
+  addRecipe: (recipe: {
+    title: string
+    ingredients: RecipeIngredient[]
+    instructions?: string
+    sourceUrl?: string
+    mealType?: MealType
+    prepTime?: PrepTime
+  }) =>
     request<Recipe>('/recipes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(recipe),
+    }),
+
+  saveRecipeFromSpoonacular: (body: { spoonacularId: number; mealType?: MealType; prepTime?: PrepTime }) =>
+    request<Recipe>('/recipes/from-spoonacular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     }),
 
   deleteRecipe: (id: string) => request<void>(`/recipes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
