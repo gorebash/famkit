@@ -1,0 +1,179 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f5f3ee;
+  color: #222;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+.nav {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 1.5rem;
+}
+
+.nav .brand {
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+.nav a {
+  color: #444;
+  text-decoration: none;
+}
+
+.nav a.active {
+  color: #b5502a;
+  font-weight: 600;
+}
+
+.button,
+button {
+  background: #b5502a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+button.link {
+  background: none;
+  color: #b5502a;
+  padding: 0;
+  text-decoration: underline;
+  font-size: 0.85rem;
+  margin-right: 0.75rem;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.inline-form input {
+  flex: 1;
+}
+
+.stacked-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-bottom: 1.5rem;
+}
+
+input,
+select,
+textarea {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.muted {
+  color: #777;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.pantry-list,
+.recipe-list,
+.grocery-list,
+.ingredient-list {
+  list-style: none;
+  padding: 0;
+}
+
+.pantry-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.pantry-item-name {
+  font-weight: 600;
+}
+
+.pantry-item-meta {
+  color: #888;
+  flex: 1;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.card img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.recipe-card-columns {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.recipe-card-columns > div {
+  flex: 1;
+}
+
+.grocery-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+}
+
+.grocery-list label.checked {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.photo-uploader {
+  margin-bottom: 1rem;
+}
+
+.detected-ingredients {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}

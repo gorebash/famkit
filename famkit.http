@@ -1,0 +1,85 @@
+### FamKit API — requires REST Client extension.
+### baseUrl comes from your VS Code user settings (rest-client.environmentVariables.$shared.baseUrl).
+### Run `func start` in src/famkit.Api and `npx azurite` first. Click "Send Request" above each block.
+
+### 1. Pantry — should start empty
+GET {{baseUrl}}/pantry
+
+### 2. Pantry — add an item
+# @name addEggs
+POST {{baseUrl}}/pantry
+Content-Type: application/json
+
+{
+  "name": "eggs",
+  "category": "fridge",
+  "quantity": "1 dozen"
+}
+
+### 3. Pantry — add another item
+# @name addFlour
+POST {{baseUrl}}/pantry
+Content-Type: application/json
+
+{
+  "name": "flour",
+  "category": "pantry"
+}
+
+### 4. Pantry — list again, should show both items
+GET {{baseUrl}}/pantry
+
+### 5. Pantry — delete the eggs item (uses the id from request #2's response)
+@eggsId = {{addEggs.response.body.$.rowKey}}
+DELETE {{baseUrl}}/pantry/{{eggsId}}
+
+### 6. Recipes — should start empty
+GET {{baseUrl}}/recipes
+
+### 7. Recipes — add a recipe
+# @name addPancakes
+POST {{baseUrl}}/recipes
+Content-Type: application/json
+
+{
+  "title": "Pancakes",
+  "ingredients": [
+    { "name": "flour" },
+    { "name": "milk" },
+    { "name": "eggs" }
+  ],
+  "instructions": "Mix and cook."
+}
+
+### 8. Recipes — evaluate by recipe id (uses the id from request #7's response)
+@pancakesId = {{addPancakes.response.body.$.id}}
+POST {{baseUrl}}/recipes/evaluate
+Content-Type: application/json
+
+{
+  "recipeId": "{{pancakesId}}"
+}
+
+### 9. Recipes — evaluate inline ingredients, no saved recipe needed
+POST {{baseUrl}}/recipes/evaluate
+Content-Type: application/json
+
+{
+  "ingredients": [
+    { "name": "flour" },
+    { "name": "sugar" }
+  ]
+}
+
+### 10. Recipes — delete the pancakes recipe
+DELETE {{baseUrl}}/recipes/{{pancakesId}}
+
+### 11. Meal plan — suggest recipes from current pantry (needs Spoonacular:ApiKey set + non-empty pantry)
+POST {{baseUrl}}/mealplan/suggest
+
+### 12. Vision — identify ingredients from a photo (raw body, Content-Type must match the file)
+### Replace the path below with a real image on your machine.
+POST {{baseUrl}}/vision/identify
+Content-Type: image/jpeg
+
+< C:\temp\pantry.jpg

@@ -1,0 +1,31 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Azure Functions
+local.settings.json
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Azurite
+.azurite/
+azurite*.log
+vite.log
+
+# Env files
+.env
+.env.local
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

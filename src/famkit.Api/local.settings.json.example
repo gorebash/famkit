@@ -1,0 +1,15 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "Foundry:Endpoint": "https://YOUR-FOUNDRY-RESOURCE.openai.azure.com/",
+        "Foundry:ApiKey": "REPLACE_ME",
+        "Foundry:DeploymentName": "REPLACE_ME",
+        "Spoonacular:ApiKey": "REPLACE_ME"
+    },
+    "Host": {
+        "CORS": "http://localhost:5173",
+        "CORSCredentials": false
+    }
+}
