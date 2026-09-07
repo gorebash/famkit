@@ -1,9 +1,6 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
-import { PantryPage } from './pages/PantryPage'
-import { MealIdeasPage } from './pages/MealIdeasPage'
-import { AddRecipePage } from './pages/AddRecipePage'
-import { GroceryListPage } from './pages/GroceryListPage'
-import { ChatPage } from './pages/ChatPage'
+import { HomePage } from './pages/HomePage'
+import { RecipesPage } from './pages/RecipesPage'
 
 export default function App() {
   return (
@@ -11,20 +8,14 @@ export default function App() {
       <nav className="nav">
         <span className="brand">FamKit</span>
         <NavLink to="/" end>
-          Pantry
+          Home
         </NavLink>
-        <NavLink to="/meals">Meal Ideas</NavLink>
         <NavLink to="/recipes">Recipes</NavLink>
-        <NavLink to="/grocery-list">Grocery List</NavLink>
-        <NavLink to="/chat">Chat</NavLink>
       </nav>
       <main className="content">
         <Routes>
-          <Route path="/" element={<PantryPage />} />
-          <Route path="/meals" element={<MealIdeasPage />} />
-          <Route path="/recipes" element={<AddRecipePage />} />
-          <Route path="/grocery-list" element={<GroceryListPage />} />
-          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/recipes" element={<RecipesPage />} />
         </Routes>
       </main>
     </div>

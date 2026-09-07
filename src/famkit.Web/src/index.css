@@ -274,22 +274,156 @@ textarea {
   margin-bottom: 0.5rem;
 }
 
-/* Chat */
-.chat-page {
+/* Home page layout */
+.home-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
+  gap: 2rem;
 }
 
-.chat-header {
+.home-chat-section h2,
+.home-pantry-section h2 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+/* Recipes page — single-scroll layout */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.grocery-badge {
+  background: white;
+  color: #b5502a;
+  border: 1px solid #b5502a;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grocery-badge:hover {
+  background: #fff5ee;
+}
+
+/* CTA button — a slim wide button that expands into the meal-ideas panel */
+.cta-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #faf7f0;
+  color: #6b3a1f;
+  border: 1px dashed #d3c9b8;
+  border-radius: 10px;
+  padding: 0.9rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.cta-button:hover {
+  background: #f4eee1;
+  border-color: #b5502a;
+  color: #b5502a;
+}
+
+/* Meal ideas inline expanded */
+.meal-ideas-inline {
+  background: #faf7f0;
+  border: 1px solid #e5e2db;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.meal-ideas-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.meal-ideas-header h2 {
+  margin: 0;
+}
+
+/* Saved recipes section */
+.saved-section {
+  margin-top: 1.5rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+/* Grocery drawer */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+  animation: fade-in 0.15s ease-out;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 90vw);
+  background: #faf7f0;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+  padding: 1.25rem 1.5rem;
+  z-index: 101;
+  overflow-y: auto;
+  animation: slide-in 0.2s ease-out;
+}
+
+.drawer-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
 
-.chat-header h1 {
+.drawer-header h2 {
   margin: 0;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Chat panel — bounded height, scrolls internally */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  background: #faf7f0;
+  border: 1px solid #e5e2db;
+  border-radius: 10px;
+  padding: 0.75rem;
 }
 
 .chat-transcript {
