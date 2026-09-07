@@ -23,7 +23,8 @@ vite.log
 
 # IDE
 .vs/
-.vscode/
+.vscode/*
+!.vscode/mcp.json
 .idea/
 
 # OS

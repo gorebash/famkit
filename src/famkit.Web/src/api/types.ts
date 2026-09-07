@@ -42,6 +42,11 @@ export interface IdentifyResponse {
   ingredients: IdentifiedIngredient[]
 }
 
+export interface BatchIdentifyResponse {
+  merged: IdentifyResponse
+  perPhoto: IdentifyResponse[]
+}
+
 export interface IngredientDiffResult {
   have: string[]
   missing: string[]

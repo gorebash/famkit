@@ -10,23 +10,32 @@ export function PhotoUploader({ onConfirm }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [detected, setDetected] = useState<IdentifiedIngredient[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
 
-    setLoading(true)
     setError(null)
+    setStatus(files.length === 1
+      ? 'Identifying ingredients...'
+      : `Identifying ingredients across ${files.length} photos, then merging...`)
+
     try {
-      const result = await api.identifyIngredients(file)
-      setDetected(result.ingredients)
-      setSelected(new Set(result.ingredients.map((i) => i.name)))
+      if (files.length === 1) {
+        const result = await api.identifyIngredients(files[0])
+        setDetected(result.ingredients)
+        setSelected(new Set(result.ingredients.map((i) => i.name)))
+      } else {
+        const result = await api.identifyIngredientsBatch(files)
+        setDetected(result.merged.ingredients)
+        setSelected(new Set(result.merged.ingredients.map((i) => i.name)))
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to identify ingredients')
     } finally {
-      setLoading(false)
+      setStatus(null)
       if (inputRef.current) inputRef.current.value = ''
     }
   }
@@ -49,17 +58,19 @@ export function PhotoUploader({ onConfirm }: PhotoUploaderProps) {
   return (
     <div className="photo-uploader">
       <label className="button">
-        Scan a photo
+        Scan photos
         <input
           ref={inputRef}
           type="file"
           accept="image/*"
           capture="environment"
+          multiple
           onChange={handleFileChange}
           hidden
         />
       </label>
-      {loading && <p>Identifying ingredients...</p>}
+      <p className="muted uploader-hint">Pick one or several photos of the same fridge/pantry — the results are merged.</p>
+      {status && <p>{status}</p>}
       {error && <p className="error">{error}</p>}
       {detected.length > 0 && (
         <div className="detected-ingredients">

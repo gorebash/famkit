@@ -1,0 +1,8 @@
+{
+    "servers": {
+        "famkit-local": {
+            "type": "http",
+            "url": "http://localhost:7072/runtime/webhooks/mcp"
+        }
+    }
+}
