@@ -47,6 +47,17 @@ export interface BatchIdentifyResponse {
   perPhoto: IdentifyResponse[]
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  toolActivity?: string[]
+}
+
+export interface ChatResponse {
+  reply: string
+  toolActivity: string[]
+}
+
 export interface IngredientDiffResult {
   have: string[]
   missing: string[]

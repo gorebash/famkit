@@ -3,6 +3,7 @@ import { PantryPage } from './pages/PantryPage'
 import { MealIdeasPage } from './pages/MealIdeasPage'
 import { AddRecipePage } from './pages/AddRecipePage'
 import { GroceryListPage } from './pages/GroceryListPage'
+import { ChatPage } from './pages/ChatPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <NavLink to="/meals">Meal Ideas</NavLink>
         <NavLink to="/recipes">Recipes</NavLink>
         <NavLink to="/grocery-list">Grocery List</NavLink>
+        <NavLink to="/chat">Chat</NavLink>
       </nav>
       <main className="content">
         <Routes>
@@ -22,6 +24,7 @@ export default function App() {
           <Route path="/meals" element={<MealIdeasPage />} />
           <Route path="/recipes" element={<AddRecipePage />} />
           <Route path="/grocery-list" element={<GroceryListPage />} />
+          <Route path="/chat" element={<ChatPage />} />
         </Routes>
       </main>
     </div>

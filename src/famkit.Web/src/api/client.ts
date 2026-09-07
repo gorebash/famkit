@@ -8,6 +8,8 @@ import type {
   MealPlanResponse,
   MealType,
   PrepTime,
+  ChatMessage,
+  ChatResponse,
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7071/api'
@@ -86,4 +88,11 @@ export const api = {
     }),
 
   suggestMealPlan: () => request<MealPlanResponse>('/mealplan/suggest', { method: 'POST' }),
+
+  chat: (messages: ChatMessage[]) =>
+    request<ChatResponse>('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: messages.map((m) => ({ role: m.role, content: m.content })) }),
+    }),
 }

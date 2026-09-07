@@ -23,6 +23,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<PantryRepository>();
 builder.Services.AddSingleton<RecipeRepository>();
 builder.Services.AddSingleton<FoundryVisionService>();
+builder.Services.AddSingleton<ChatService>();
 builder.Services.AddHttpClient<SpoonacularClient>();
 
 if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING")))
