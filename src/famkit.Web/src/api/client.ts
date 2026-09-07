@@ -3,6 +3,7 @@ import type {
   Recipe,
   RecipeIngredient,
   IdentifyResponse,
+  BatchIdentifyResponse,
   IngredientDiffResult,
   MealPlanResponse,
   MealType,
@@ -42,6 +43,15 @@ export const api = {
       headers: { 'Content-Type': file.type || 'image/jpeg' },
       body: file,
     }),
+
+  identifyIngredientsBatch: (files: File[]) => {
+    const formData = new FormData()
+    files.forEach((f, i) => formData.append(`photo${i}`, f, f.name))
+    return request<BatchIdentifyResponse>('/vision/identify-batch', {
+      method: 'POST',
+      body: formData,
+    })
+  },
 
   getRecipes: () => request<Recipe[]>('/recipes'),
 

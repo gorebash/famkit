@@ -2,7 +2,7 @@
   "profiles": {
     "famkit_Api": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7277",
+      "commandLineArgs": "--port 7072",
       "launchBrowser": false
     }
   }
