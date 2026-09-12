@@ -38,13 +38,24 @@ npm run dev
 
 The web app defaults to `http://localhost:7071/api` for the API — override with `VITE_API_BASE_URL` in `.env`.
 
-Vision identification and meal suggestions require real credentials in `src/famkit.Api/local.settings.json`:
-- `Foundry:Endpoint` / `Foundry:ApiKey` / `Foundry:DeploymentName` — an Azure AI Foundry vision-capable model
-  deployment. Use the resource's classic endpoint shape (`https://<resource-name>.openai.azure.com/`), not the
+Vision identification, chat, and meal suggestions require real credentials in `src/famkit.Api/local.settings.json`:
+- `Foundry:Endpoint` / `Foundry:ApiKey` / `Foundry:DeploymentName` / `Foundry:ChatDeploymentName` — an Azure AI
+  Foundry resource with two deployments: `image-processor` (vision) and `chat-processor` (tool-calling chat).
+  Use the resource's classic endpoint shape (`https://<resource-name>.openai.azure.com/`), not the
   `/api/projects/<name>` project endpoint — `Azure.AI.OpenAI`'s `AzureOpenAIClient` needs the former for API-key auth.
-  This project's `famkit-foundry` resource has no Azure OpenAI (gpt-4o family) access, so it's deployed on
-  **Llama-4-Scout-17B-16E-Instruct** (Meta, natively multimodal, `GlobalStandard` SKU) under the deployment name
-  `image-processor` instead — swap in `gpt-4o-mini` there if/when OpenAI models become available on the resource.
+
+  Azure OpenAI model availability (gpt-4o/gpt-5 family) is **regional**, not a subscription-wide gate — many
+  regions (this project's original `westus2` resource included) have zero OpenAI-format models in their catalog,
+  only third-party ones (Meta, Microsoft, Cohere, DeepSeek, xAI, etc). `eastus` reliably has the full OpenAI
+  catalog. This project's active resource, `famkit-foundry-2` (`eastus`), runs **gpt-5-mini** on both deployments
+  — it's natively multimodal (vision) and supports real tool calling, so one model now covers both jobs (earlier
+  iterations needed Llama-4-Scout for vision + gpt-oss-120b for tool calling as a workaround). gpt-5-mini is also
+  a reasoning model: if you ever see empty responses with `finish_reason: "length"`, the reasoning tokens ate the
+  whole budget — either raise `max_completion_tokens` or pass `reasoning_effort: "minimal"` for straightforward
+  extraction tasks like ours.
+
+  A prior resource, `famkit-foundry` (`westus2`, Llama-4-Scout + gpt-oss-120b), is still provisioned but no longer
+  referenced by the app — kept around temporarily, slated for deletion.
 - `Spoonacular:ApiKey` — a free-tier key from [spoonacular.com/food-api](https://spoonacular.com/food-api).
 
 Pantry and recipe management work without those keys.

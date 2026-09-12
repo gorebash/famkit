@@ -6,12 +6,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 
+// ChatCompletionOptions.ReasoningEffortLevel is marked experimental (OPENAI001) in this SDK version.
+#pragma warning disable OPENAI001
+
 namespace famkit.Services;
 
 public class FoundryVisionService
 {
     private const string IdentifyPromptFile = "vision-system-prompt.txt";
     private const string SynthesisPromptFile = "vision-synthesis-prompt.txt";
+
+    // gpt-5-mini is a reasoning model; these are straightforward extraction tasks that don't
+    // benefit from deep reasoning, and without this the model can burn its whole token budget
+    // on internal reasoning before producing any output (finish_reason: "length", empty content).
+    private static readonly ChatCompletionOptions FastOptions = new() { ReasoningEffortLevel = ChatReasoningEffortLevel.Minimal };
 
     private readonly ChatClient? _chatClient;
     private readonly ILogger<FoundryVisionService> _logger;
@@ -52,7 +60,7 @@ public class FoundryVisionService
             ),
         ];
 
-        ChatCompletion completion = await client.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        ChatCompletion completion = await client.CompleteChatAsync(messages, FastOptions, cancellationToken);
         var rawText = completion.Content.Count > 0 ? completion.Content[0].Text : "[]";
         return new IdentifyResponse(ParseIngredients(rawText));
     }
@@ -77,7 +85,7 @@ public class FoundryVisionService
             new UserChatMessage(userText),
         ];
 
-        ChatCompletion completion = await client.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        ChatCompletion completion = await client.CompleteChatAsync(messages, FastOptions, cancellationToken);
         var rawText = completion.Content.Count > 0 ? completion.Content[0].Text : "[]";
         return new IdentifyResponse(ParseIngredients(rawText));
     }

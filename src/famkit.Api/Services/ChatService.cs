@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 
+// ChatCompletionOptions.ReasoningEffortLevel is marked experimental (OPENAI001) in this SDK version.
+#pragma warning disable OPENAI001
+
 namespace famkit.Services;
 
 public record ChatMessageDto(string Role, string Content);
@@ -13,8 +16,9 @@ public record ChatRequestDto(List<ChatMessageDto> Messages);
 public record ChatResponseDto(string Reply, List<string> ToolActivity);
 
 /// <summary>
-/// Handles conversational chat with tool calling. The model is Llama-4-Scout on Foundry
-/// (same deployment as vision), and the tools it can call are a small set that mirror
+/// Handles conversational chat with tool calling, using its own Foundry deployment
+/// (Foundry:ChatDeploymentName), separate from the vision deployment. The tools it can
+/// call are a small set that mirror
 /// the MCP tools we expose to external clients — but here they invoke the repositories
 /// directly rather than going through the MCP HTTP endpoint. That keeps this handler
 /// dependency-free from MCP session/SSE plumbing while still teaching function calling.
@@ -81,7 +85,9 @@ public class ChatService
             });
         }
 
-        var options = new ChatCompletionOptions();
+        // gpt-5-mini is a reasoning model; minimal effort suits tool-calling/chat here and avoids
+        // burning the whole token budget on internal reasoning before producing a tool call or reply.
+        var options = new ChatCompletionOptions { ReasoningEffortLevel = ChatReasoningEffortLevel.Minimal };
         foreach (var tool in ChatTools) options.Tools.Add(tool);
 
         var toolActivity = new List<string>();
