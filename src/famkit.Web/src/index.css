@@ -1,12 +1,21 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
   font-family: system-ui, -apple-system, sans-serif;
+
+  --bg: #1a1816;
+  --surface: #24211d;
+  --surface-hover: #2d2924;
+  --border: #3d372f;
+  --text: #ece7dd;
+  --text-muted: #96897a;
+  --accent: #b5502a;
+  --danger: #e2685c;
 }
 
 body {
   margin: 0;
-  background: #f5f3ee;
-  color: #222;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .app {
@@ -20,7 +29,7 @@ body {
   gap: 1.25rem;
   align-items: center;
   padding: 1rem 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 1.5rem;
 }
 
@@ -31,18 +40,18 @@ body {
 }
 
 .nav a {
-  color: #444;
+  color: var(--text-muted);
   text-decoration: none;
 }
 
 .nav a.active {
-  color: #b5502a;
+  color: var(--accent);
   font-weight: 600;
 }
 
 .button,
 button {
-  background: #b5502a;
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 6px;
@@ -58,7 +67,7 @@ button:disabled {
 
 button.link {
   background: none;
-  color: #b5502a;
+  color: var(--accent);
   padding: 0;
   text-decoration: underline;
   font-size: 0.85rem;
@@ -87,18 +96,20 @@ input,
 select,
 textarea {
   padding: 0.5rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 0.95rem;
   font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .muted {
-  color: #777;
+  color: var(--text-muted);
 }
 
 .error {
-  color: #c0392b;
+  color: var(--danger);
 }
 
 .pantry-list,
@@ -114,7 +125,7 @@ textarea {
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 
 .pantry-item-name {
@@ -122,15 +133,15 @@ textarea {
 }
 
 .pantry-item-meta {
-  color: #888;
+  color: var(--text-muted);
   flex: 1;
 }
 
 .card {
-  background: white;
+  background: var(--surface);
   border-radius: 10px;
   padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   margin-bottom: 1rem;
 }
 
@@ -164,7 +175,7 @@ textarea {
 
 .grocery-list label.checked {
   text-decoration: line-through;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .photo-uploader {
@@ -172,7 +183,7 @@ textarea {
 }
 
 .detected-ingredients {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   margin-top: 0.75rem;
@@ -189,7 +200,7 @@ textarea {
   gap: 0.25rem;
   flex: 1;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .recipe-card-actions {
@@ -208,8 +219,8 @@ textarea {
   align-items: center;
   padding: 0.75rem 0;
   margin-bottom: 1rem;
-  border-top: 1px solid #e5e2db;
-  border-bottom: 1px solid #e5e2db;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .filter-group {
@@ -221,29 +232,29 @@ textarea {
 
 .filter-label {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-muted);
   margin-right: 0.25rem;
 }
 
 .filter-chip {
-  background: white;
-  color: #555;
-  border: 1px solid #ccc;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
   padding: 0.25rem 0.7rem;
   font-size: 0.8rem;
   border-radius: 999px;
 }
 
 .filter-chip.active {
-  background: #b5502a;
+  background: var(--accent);
   color: white;
-  border-color: #b5502a;
+  border-color: var(--accent);
 }
 
 .filter-count {
   margin-left: auto;
   font-size: 0.8rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .recipe-tags {
@@ -254,8 +265,8 @@ textarea {
 }
 
 .tag {
-  background: #eee2d7;
-  color: #6b3a1f;
+  background: #3a2b1e;
+  color: #e3ab84;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -300,9 +311,9 @@ textarea {
 }
 
 .grocery-badge {
-  background: white;
-  color: #b5502a;
-  border: 1px solid #b5502a;
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 999px;
   padding: 0.45rem 0.9rem;
   font-size: 0.9rem;
@@ -311,7 +322,7 @@ textarea {
 }
 
 .grocery-badge:hover {
-  background: #fff5ee;
+  background: var(--surface-hover);
 }
 
 /* CTA button — a slim wide button that expands into the meal-ideas panel */
@@ -319,9 +330,9 @@ textarea {
   display: block;
   width: 100%;
   text-align: left;
-  background: #faf7f0;
-  color: #6b3a1f;
-  border: 1px dashed #d3c9b8;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
   border-radius: 10px;
   padding: 0.9rem 1.2rem;
   font-size: 1rem;
@@ -330,15 +341,15 @@ textarea {
 }
 
 .cta-button:hover {
-  background: #f4eee1;
-  border-color: #b5502a;
-  color: #b5502a;
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Meal ideas inline expanded */
 .meal-ideas-inline {
-  background: #faf7f0;
-  border: 1px solid #e5e2db;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
@@ -375,7 +386,7 @@ textarea {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 100;
   animation: fade-in 0.15s ease-out;
 }
@@ -386,8 +397,8 @@ textarea {
   right: 0;
   bottom: 0;
   width: min(400px, 90vw);
-  background: #faf7f0;
-  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+  background: var(--surface);
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.5);
   padding: 1.25rem 1.5rem;
   z-index: 101;
   overflow-y: auto;
@@ -419,8 +430,8 @@ textarea {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  background: #faf7f0;
-  border: 1px solid #e5e2db;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.75rem;
 }
@@ -454,9 +465,9 @@ textarea {
 }
 
 .chat-suggestion {
-  background: white;
-  color: #555;
-  border: 1px solid #ccc;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -464,8 +475,8 @@ textarea {
 }
 
 .chat-suggestion:hover {
-  border-color: #b5502a;
-  color: #b5502a;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .chat-bubble {
@@ -478,29 +489,29 @@ textarea {
 }
 
 .chat-bubble-user {
-  background: #b5502a;
+  background: var(--accent);
   color: white;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
 
 .chat-bubble-assistant {
-  background: white;
-  color: #222;
+  background: var(--surface-hover);
+  color: var(--text);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .chat-thinking {
-  color: #888;
+  color: var(--text-muted);
   font-style: italic;
 }
 
 .chat-tool-activity {
   font-size: 0.75rem;
-  color: #888;
-  border-left: 2px solid #ddd;
+  color: var(--text-muted);
+  border-left: 2px solid var(--border);
   padding-left: 0.5rem;
   margin-bottom: 0.4rem;
 }
@@ -510,7 +521,7 @@ textarea {
   gap: 0.5rem;
   align-items: flex-end;
   padding-top: 0.75rem;
-  border-top: 1px solid #e5e2db;
+  border-top: 1px solid var(--border);
 }
 
 .chat-input-row textarea {
