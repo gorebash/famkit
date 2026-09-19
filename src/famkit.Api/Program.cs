@@ -16,7 +16,7 @@ builder.ConfigureFunctionsWebApplication();
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    var connectionString = config["AzureWebJobsStorage"] ?? "UseDevelopmentStorage=true";
+    var connectionString = config["TableStorage:ConnectionString"] ?? "UseDevelopmentStorage=true";
     return new TableServiceClient(connectionString);
 });
 

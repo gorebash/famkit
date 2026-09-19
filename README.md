@@ -116,6 +116,12 @@ sandboxed Oryx build rather than a real standalone Function App:
    project fails the build outright (`invalid trigger of type 'mcpToolTrigger'... only httpTriggers are
    supported`). This is why `famkit.Mcp` is a separate, non-deployed project (see Structure above) rather than
    a folder inside `famkit.Api`.
+3. **`AzureWebJobsStorage` can't be pointed at your own storage account** — the platform reserves that name for
+   its own internal Functions runtime storage and rejects any attempt to set it (`AppSetting with name(s)
+   'AzureWebJobsStorage' are not allowed`). Table Storage for actual app data (pantry/recipes) uses its own
+   config key instead — `TableStorage:ConnectionString` — pointed at a dedicated storage account
+   (`famkitappdata`, provisioned separately from any other resource in the resource group) via
+   `az staticwebapp appsettings set`.
 
 A linked-backend architecture (a real standalone Function App, keeping net10 + MCP intact, fronted by the SWA)
 was considered and rejected for cost reasons — linked backends require the SWA **Standard** tier (~$9/mo)
