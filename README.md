@@ -11,13 +11,20 @@ enter a recipe by hand and see what you're missing from your current stock.
 ### Structure
 
 - `src/famkit.slnx` — solution file.
-- `src/famkit.Api` — Azure Functions (.NET 10 isolated worker, hosted model). Vision identification, pantry/recipe
-  CRUD (Azure Table Storage), Spoonacular integration, and the ingredient-diff logic.
+- `src/famkit.Api` — Azure Functions (.NET 8 isolated worker, hosted model). Vision identification, pantry/recipe
+  CRUD (Azure Table Storage), Spoonacular integration, chat, and the ingredient-diff logic. This is the project
+  that gets deployed (see Deployment below) — HTTP-triggered functions only.
+- `src/famkit.Mcp` — a separate, **local-only** Azure Functions project exposing the same pantry/recipe operations
+  as MCP tools (`famkit-mcp`, for VS Code Copilot / Claude Desktop / MCP Inspector). It project-references
+  `famkit.Api` to reuse `PantryRepository`/`RecipeRepository` against the same Table Storage data, so both
+  surfaces see identical state. It's split out because Azure Static Web Apps' managed Functions integration only
+  supports `httpTrigger` functions — an `mcpToolTrigger` function anywhere in the deployed project fails the
+  build (see Deployment). Run it locally with `func start` in this folder; it's never deployed.
 - `src/famkit.Web` — React + Vite + TypeScript frontend.
 
 ### Local development
 
-Requirements: .NET 10 SDK, Azure Functions Core Tools v4, Node.js, and [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)
+Requirements: .NET SDK (8.0+), Azure Functions Core Tools v4, Node.js, and [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)
 for local Table Storage.
 
 ```bash
@@ -27,9 +34,13 @@ npx azurite --silent --location .azurite
 # Terminal 2: API
 cd src/famkit.Api
 cp local.settings.json.example local.settings.json   # fill in Foundry + Spoonacular values
-func start
+func start   # http://localhost:7072
 
-# Terminal 3: web app
+# Terminal 3: MCP tools (optional — only needed for VS Code Copilot / Claude Desktop / MCP Inspector)
+cd src/famkit.Mcp
+func start   # http://localhost:7073, registered in .vscode/mcp.json
+
+# Terminal 4: web app
 cd src/famkit.Web
 npm install
 cp .env.example .env
@@ -85,3 +96,30 @@ Vision identification, chat, and meal suggestions require real credentials in `s
 - `Spoonacular:ApiKey` — a free-tier key from [spoonacular.com/food-api](https://spoonacular.com/food-api).
 
 Pantry and recipe management work without those keys.
+
+### Deployment
+
+Hosted on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static), Free tier, via
+`.github/workflows/azure-static-web-apps.yml` — pushes to `main` build `famkit.Web` and deploy it alongside
+`famkit.Api` using SWA's built-in **managed Functions integration** (no separate Function App resource, no
+extra cost beyond Free tier's $0). The frontend is built with `VITE_API_BASE_URL=/api`, which SWA rewrites
+same-origin to the linked Functions app.
+
+App settings (Foundry/Spoonacular keys) are configured directly on the Static Web App resource
+(`az staticwebapp appsettings set`), not in `local.settings.json` (that file is gitignored and local-only).
+
+Two Free-tier constraints surfaced while setting this up, both from SWA's managed integration using a
+sandboxed Oryx build rather than a real standalone Function App:
+1. **`.NET` version is capped** — Oryx's managed Functions build only supports `dotnet-isolated` 8.0/9.0, not
+   10.0 (`famkit.Api` was downgraded from net10.0 to net8.0 for this; nothing in the code needed net10).
+2. **Only `httpTrigger` functions are supported** — an `mcpToolTrigger` function anywhere in the deployed
+   project fails the build outright (`invalid trigger of type 'mcpToolTrigger'... only httpTriggers are
+   supported`). This is why `famkit.Mcp` is a separate, non-deployed project (see Structure above) rather than
+   a folder inside `famkit.Api`.
+
+A linked-backend architecture (a real standalone Function App, keeping net10 + MCP intact, fronted by the SWA)
+was considered and rejected for cost reasons — linked backends require the SWA **Standard** tier (~$9/mo)
+regardless of which compute sits behind it, which didn't fit this project's low-traffic personal-use budget.
+
+Auth (the SWA is already configured with OAuth) is intentionally not yet wired into the app — planned as a
+separate follow-up.

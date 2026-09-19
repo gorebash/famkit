@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="famkit.Api/famkit.Api.csproj" />
+  <Project Path="famkit.Mcp/famkit.Mcp.csproj" />
 </Solution>
