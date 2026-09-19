@@ -7,6 +7,8 @@
         "Foundry:ApiKey": "REPLACE_ME",
         "Foundry:DeploymentName": "REPLACE_ME",
         "Foundry:ChatDeploymentName": "REPLACE_ME",
+        "Foundry:ProjectEndpoint": "https://YOUR-FOUNDRY-RESOURCE.services.ai.azure.com/api/projects/YOUR-PROJECT-NAME",
+        "Foundry:ChatAgentName": "REPLACE_ME",
         "Spoonacular:ApiKey": "REPLACE_ME"
     },
     "Host": {

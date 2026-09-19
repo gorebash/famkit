@@ -1,12 +1,13 @@
 using System.Text.Json;
-using Azure;
-using Azure.AI.OpenAI;
+using Azure.AI.Projects;
+using Azure.AI.Extensions.OpenAI;
+using Azure.Identity;
 using famkit.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OpenAI.Chat;
+using OpenAI.Responses;
 
-// ChatCompletionOptions.ReasoningEffortLevel is marked experimental (OPENAI001) in this SDK version.
+// OpenAI.Responses / Azure.AI.Extensions.OpenAI Responses bridge is marked experimental (OPENAI001).
 #pragma warning disable OPENAI001
 
 namespace famkit.Services;
@@ -16,28 +17,20 @@ public record ChatRequestDto(List<ChatMessageDto> Messages);
 public record ChatResponseDto(string Reply, List<string> ToolActivity);
 
 /// <summary>
-/// Handles conversational chat with tool calling, using its own Foundry deployment
-/// (Foundry:ChatDeploymentName), separate from the vision deployment. The tools it can
-/// call are a small set that mirror
-/// the MCP tools we expose to external clients — but here they invoke the repositories
-/// directly rather than going through the MCP HTTP endpoint. That keeps this handler
-/// dependency-free from MCP session/SSE plumbing while still teaching function calling.
+/// Handles conversational chat by calling a Foundry Prompt Agent (Foundry:ChatAgentName) over the
+/// Responses API, rather than calling a model directly. The agent owns its own system prompt and
+/// tool schemas (configured in Foundry, not in this code) — this service's job is just to run the
+/// tool-calling round trip: send the conversation, execute whatever tool the agent asks for against
+/// our repositories, feed the result back, repeat until the agent produces a final reply.
+///
+/// Auth is Entra ID (DefaultAzureCredential) rather than the API key used elsewhere in this app —
+/// Foundry's Agent Service requires it. Locally this resolves via the developer's `az login` session.
 /// </summary>
 public class ChatService
 {
     private const int MaxToolIterations = 5;
 
-    private const string SystemPrompt =
-        "You are FamKit, a friendly kitchen assistant for one family. You can see and modify the family's pantry, " +
-        "fridge, and saved-recipe library through the tools available to you.\n\n" +
-        "Use tools whenever the user asks a question that depends on real inventory or saved recipes — never guess " +
-        "at what's in the fridge. When the user mentions cooking or preparing a specific dish (e.g. 'I'm making " +
-        "tacos'), use your general cooking knowledge to list typical ingredients for that dish, then call " +
-        "evaluate_recipe_ingredients to check which are on hand and which the user needs to buy.\n\n" +
-        "When adding items on the user's behalf, confirm what you added. Keep replies concise, warm, and " +
-        "helpful — one or two short paragraphs at most.";
-
-    private readonly ChatClient? _chatClient;
+    private readonly ProjectResponsesClient? _responsesClient;
     private readonly ILogger<ChatService> _logger;
     private readonly PantryRepository _pantryRepository;
     private readonly RecipeRepository _recipeRepository;
@@ -52,64 +45,55 @@ public class ChatService
         _pantryRepository = pantryRepository;
         _recipeRepository = recipeRepository;
 
-        var endpoint = configuration["Foundry:Endpoint"];
-        var apiKey = configuration["Foundry:ApiKey"];
-        // Chat uses its own deployment (a tool-calling-capable model) separate from the vision deployment.
-        var deploymentName = configuration["Foundry:ChatDeploymentName"];
+        var projectEndpoint = configuration["Foundry:ProjectEndpoint"];
+        var agentName = configuration["Foundry:ChatAgentName"];
 
-        if (string.IsNullOrWhiteSpace(endpoint) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(deploymentName))
+        if (string.IsNullOrWhiteSpace(projectEndpoint) || string.IsNullOrWhiteSpace(agentName))
         {
-            _logger.LogWarning("Foundry chat configuration is incomplete; chat will fail until Foundry:Endpoint, Foundry:ApiKey and Foundry:ChatDeploymentName are set.");
+            _logger.LogWarning("Foundry chat agent configuration is incomplete; chat will fail until Foundry:ProjectEndpoint and Foundry:ChatAgentName are set.");
             return;
         }
 
-        var azureClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
-        _chatClient = azureClient.GetChatClient(deploymentName);
+        var projectClient = new AIProjectClient(new Uri(projectEndpoint), new DefaultAzureCredential());
+        _responsesClient = projectClient.ProjectOpenAIClient.GetProjectResponsesClientForAgent(defaultAgent: agentName);
     }
 
     public async Task<ChatResponseDto> ChatAsync(ChatRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (_chatClient is null)
+        if (_responsesClient is null)
         {
-            throw new InvalidOperationException("Foundry chat client is not configured.");
+            throw new InvalidOperationException("Foundry chat agent is not configured. Set Foundry:ProjectEndpoint and Foundry:ChatAgentName in local.settings.json.");
         }
 
-        var messages = new List<ChatMessage> { new SystemChatMessage(SystemPrompt) };
-        foreach (var m in request.Messages)
-        {
-            messages.Add(m.Role switch
-            {
-                "user" => new UserChatMessage(m.Content),
-                "assistant" => new AssistantChatMessage(m.Content),
-                _ => new UserChatMessage(m.Content),
-            });
-        }
-
-        // gpt-5-mini is a reasoning model; minimal effort suits tool-calling/chat here and avoids
-        // burning the whole token budget on internal reasoning before producing a tool call or reply.
-        var options = new ChatCompletionOptions { ReasoningEffortLevel = ChatReasoningEffortLevel.Minimal };
-        foreach (var tool in ChatTools) options.Tools.Add(tool);
+        List<ResponseItem> input = request.Messages
+            .Select(m => m.Role == "assistant"
+                ? (ResponseItem)ResponseItem.CreateAssistantMessageItem(m.Content)
+                : ResponseItem.CreateUserMessageItem(m.Content))
+            .ToList();
 
         var toolActivity = new List<string>();
 
         for (int iter = 0; iter < MaxToolIterations; iter++)
         {
-            ChatCompletion completion = await _chatClient.CompleteChatAsync(messages, options, cancellationToken);
+            var result = await _responsesClient.CreateResponseAsync(input, previousResponseId: null, cancellationToken);
+            var response = result.Value;
 
-            if (completion.FinishReason != ChatFinishReason.ToolCalls)
+            var functionCalls = response.OutputItems.OfType<FunctionCallResponseItem>().ToList();
+            if (functionCalls.Count == 0)
             {
-                var reply = completion.Content.Count > 0 ? completion.Content[0].Text : "";
+                var reply = string.Concat(
+                    response.OutputItems.OfType<MessageResponseItem>()
+                        .SelectMany(m => m.Content)
+                        .Select(c => c.Text));
                 return new ChatResponseDto(reply, toolActivity);
             }
 
-            // Preserve the assistant's tool-call turn in the message list before we add tool results.
-            messages.Add(new AssistantChatMessage(completion));
-
-            foreach (var toolCall in completion.ToolCalls)
+            foreach (var call in functionCalls)
             {
-                var (result, activityLine) = await InvokeToolAsync(toolCall, cancellationToken);
+                input.Add(call);
+                var (toolResult, activityLine) = await InvokeToolAsync(call.FunctionName, call.FunctionArguments.ToString());
                 toolActivity.Add(activityLine);
-                messages.Add(new ToolChatMessage(toolCall.Id, result));
+                input.Add(ResponseItem.CreateFunctionCallOutputItem(call.CallId, toolResult));
             }
         }
 
@@ -119,10 +103,8 @@ public class ChatService
             toolActivity);
     }
 
-    private async Task<(string result, string activity)> InvokeToolAsync(ChatToolCall toolCall, CancellationToken cancellationToken)
+    private async Task<(string result, string activity)> InvokeToolAsync(string name, string argsJson)
     {
-        var name = toolCall.FunctionName;
-        var argsJson = toolCall.FunctionArguments.ToString();
         _logger.LogInformation("Chat tool call: {Tool} with args {Args}", name, argsJson);
 
         try
@@ -215,64 +197,4 @@ public class ChatService
             return ($"{{\"error\":\"{ex.Message}\"}}", $"Tool '{name}' errored: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Tool definitions advertised to the model. These mirror the MCP tools by design —
-    /// both surfaces expose the same capabilities with the same JSON Schemas.
-    /// </summary>
-    private static readonly ChatTool[] ChatTools =
-    [
-        ChatTool.CreateFunctionTool(
-            functionName: "list_pantry",
-            functionDescription: "Returns every item currently in the family's pantry and fridge. Use this whenever you need to know what ingredients are on hand.",
-            functionParameters: BinaryData.FromString("""
-                {"type":"object","properties":{},"required":[]}
-            """)),
-
-        ChatTool.CreateFunctionTool(
-            functionName: "add_pantry_item",
-            functionDescription: "Adds a single ingredient to the family's pantry or fridge.",
-            functionParameters: BinaryData.FromString("""
-                {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string", "description": "The ingredient's common name (e.g. 'milk', 'cheddar cheese', 'eggs'). Lowercase, singular preferred."},
-                        "category": {"type": "string", "enum": ["fridge", "pantry"], "description": "Where it's stored. Defaults to 'pantry' if omitted."},
-                        "quantity": {"type": "string", "description": "Optional free-text quantity, e.g. '1 dozen', 'half gallon', '2 cans'."}
-                    },
-                    "required": ["name"]
-                }
-            """)),
-
-        ChatTool.CreateFunctionTool(
-            functionName: "list_recipes",
-            functionDescription: "Returns the family's saved recipes, optionally filtered by meal type and prep time.",
-            functionParameters: BinaryData.FromString("""
-                {
-                    "type": "object",
-                    "properties": {
-                        "meal_type": {"type": "string", "enum": ["breakfast", "lunch", "dinner", "any"], "description": "Optional filter."},
-                        "prep_time": {"type": "string", "enum": ["quick", "standard"], "description": "Optional filter. 'quick' means 30 minutes or less."}
-                    },
-                    "required": []
-                }
-            """)),
-
-        ChatTool.CreateFunctionTool(
-            functionName: "evaluate_recipe_ingredients",
-            functionDescription: "Given a list of ingredient names, returns which are on hand and which need to be bought. Use this to build a shopping list for a specific recipe or dish.",
-            functionParameters: BinaryData.FromString("""
-                {
-                    "type": "object",
-                    "properties": {
-                        "ingredients": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Ingredient names to check, e.g. ['tortillas', 'ground beef', 'cheese', 'lettuce', 'salsa']."
-                        }
-                    },
-                    "required": ["ingredients"]
-                }
-            """)),
-    ];
 }
