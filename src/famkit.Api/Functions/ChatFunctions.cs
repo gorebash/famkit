@@ -13,9 +13,9 @@ public class ChatFunctions(ChatService chatService, ILogger<ChatFunctions> logge
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "chat")] HttpRequest req)
     {
         var request = await req.ReadFromJsonAsync<ChatRequestDto>();
-        if (request is null || request.Messages is null || request.Messages.Count == 0)
+        if (request is null || string.IsNullOrWhiteSpace(request.Message))
         {
-            return new BadRequestObjectResult("At least one message is required.");
+            return new BadRequestObjectResult("message is required.");
         }
 
         try

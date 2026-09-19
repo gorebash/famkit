@@ -35,6 +35,9 @@ function ChatPanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const transcriptRef = useRef<HTMLDivElement>(null)
+  // Chains to Foundry's server-side conversation state (see ChatService) — only the id needs to be
+  // kept and echoed back; we never resend prior messages or tool results ourselves.
+  const previousResponseIdRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' })
@@ -44,15 +47,14 @@ function ChatPanel() {
     const text = (promptText ?? input).trim()
     if (!text || loading) return
 
-    const userMsg: ChatMessage = { role: 'user', content: text }
-    const nextHistory = [...messages, userMsg]
-    setMessages(nextHistory)
+    setMessages((prev) => [...prev, { role: 'user', content: text }])
     setInput('')
     setLoading(true)
     setError(null)
 
     try {
-      const res = await api.chat(nextHistory)
+      const res = await api.chat(text, previousResponseIdRef.current)
+      previousResponseIdRef.current = res.responseId
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: res.reply, toolActivity: res.toolActivity },
@@ -64,6 +66,12 @@ function ChatPanel() {
     }
   }
 
+  function startOver() {
+    setMessages([])
+    setError(null)
+    previousResponseIdRef.current = undefined
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -73,6 +81,13 @@ function ChatPanel() {
 
   return (
     <div className="chat-panel">
+      {messages.length > 0 && (
+        <div className="chat-panel-toolbar">
+          <button className="link" onClick={startOver}>
+            Start over
+          </button>
+        </div>
+      )}
       <div ref={transcriptRef} className="chat-transcript">
         {messages.length === 0 ? (
           <div className="chat-welcome">

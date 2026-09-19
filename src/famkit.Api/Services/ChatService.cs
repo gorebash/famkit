@@ -12,9 +12,8 @@ using OpenAI.Responses;
 
 namespace famkit.Services;
 
-public record ChatMessageDto(string Role, string Content);
-public record ChatRequestDto(List<ChatMessageDto> Messages);
-public record ChatResponseDto(string Reply, List<string> ToolActivity);
+public record ChatRequestDto(string Message, string? PreviousResponseId);
+public record ChatResponseDto(string Reply, List<string> ToolActivity, string ResponseId);
 
 /// <summary>
 /// Handles conversational chat by calling a Foundry Prompt Agent (Foundry:ChatAgentName) over the
@@ -22,6 +21,13 @@ public record ChatResponseDto(string Reply, List<string> ToolActivity);
 /// tool schemas (configured in Foundry, not in this code) — this service's job is just to run the
 /// tool-calling round trip: send the conversation, execute whatever tool the agent asks for against
 /// our repositories, feed the result back, repeat until the agent produces a final reply.
+///
+/// Conversation state lives server-side in Foundry, chained via previousResponseId (both across
+/// separate chat turns AND across tool round trips within one turn) rather than us resending the
+/// full message/tool-call history on every call. The caller only ever sends the newest message plus
+/// the response id it got back last time — that's also what makes a repeated tool call within the
+/// same conversation actually get skipped (the model can see it already has that data via the chain),
+/// instead of re-invoking it on every new message because it never saw its own past tool results.
 ///
 /// Auth is Entra ID (DefaultAzureCredential) rather than the API key used elsewhere in this app —
 /// Foundry's Agent Service requires it. Locally this resolves via the developer's `az login` session.
@@ -65,17 +71,14 @@ public class ChatService
             throw new InvalidOperationException("Foundry chat agent is not configured. Set Foundry:ProjectEndpoint and Foundry:ChatAgentName in local.settings.json.");
         }
 
-        List<ResponseItem> input = request.Messages
-            .Select(m => m.Role == "assistant"
-                ? (ResponseItem)ResponseItem.CreateAssistantMessageItem(m.Content)
-                : ResponseItem.CreateUserMessageItem(m.Content))
-            .ToList();
+        List<ResponseItem> input = [ResponseItem.CreateUserMessageItem(request.Message)];
+        string? previousResponseId = request.PreviousResponseId;
 
         var toolActivity = new List<string>();
 
         for (int iter = 0; iter < MaxToolIterations; iter++)
         {
-            var result = await _responsesClient.CreateResponseAsync(input, previousResponseId: null, cancellationToken);
+            var result = await _responsesClient.CreateResponseAsync(input, previousResponseId, cancellationToken);
             var response = result.Value;
 
             var functionCalls = response.OutputItems.OfType<FunctionCallResponseItem>().ToList();
@@ -85,12 +88,15 @@ public class ChatService
                     response.OutputItems.OfType<MessageResponseItem>()
                         .SelectMany(m => m.Content)
                         .Select(c => c.Text));
-                return new ChatResponseDto(reply, toolActivity);
+                return new ChatResponseDto(reply, toolActivity, response.Id);
             }
 
+            // Chain off this response and send only the new tool outputs — Foundry already has the
+            // user message and the function-call items server-side as part of this response.
+            previousResponseId = response.Id;
+            input = [];
             foreach (var call in functionCalls)
             {
-                input.Add(call);
                 var (toolResult, activityLine) = await InvokeToolAsync(call.FunctionName, call.FunctionArguments.ToString());
                 toolActivity.Add(activityLine);
                 input.Add(ResponseItem.CreateFunctionCallOutputItem(call.CallId, toolResult));
@@ -100,7 +106,8 @@ public class ChatService
         _logger.LogWarning("Chat loop hit MaxToolIterations={Max} without a final response.", MaxToolIterations);
         return new ChatResponseDto(
             "I got tangled up trying to look that up. Could you rephrase?",
-            toolActivity);
+            toolActivity,
+            previousResponseId ?? "");
     }
 
     private async Task<(string result, string activity)> InvokeToolAsync(string name, string argsJson)

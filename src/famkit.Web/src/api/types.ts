@@ -56,6 +56,7 @@ export interface ChatMessage {
 export interface ChatResponse {
   reply: string
   toolActivity: string[]
+  responseId: string
 }
 
 export interface IngredientDiffResult {

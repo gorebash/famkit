@@ -58,6 +58,16 @@ Vision identification, chat, and meal suggestions require real credentials in `s
   final reply. First chat request in a fresh process run is slow (~30-45s) — that's `DefaultAzureCredential`
   probing its full credential chain once; it's cached for the rest of the process's lifetime.
 
+  Conversation state is chained via the Responses API's `previous_response_id`, not resent by the client.
+  `POST /api/chat` takes `{ message, previousResponseId? }` and returns `{ reply, toolActivity, responseId }` —
+  the frontend only has to remember the last `responseId` and echo it back next turn (see `ChatPanel` in
+  `HomePage.tsx`). This also applies *within* a single turn's tool round trips (each iteration chains off the
+  previous one and sends only the new tool output, not the whole growing history). Without this, the client
+  would have to resend full message history on every turn, and the model — having no memory of its own past
+  tool calls — would re-invoke tools like `list_pantry` on every new message even when nothing changed,
+  burning tokens and latency for no reason. With chaining, it still calls tools again when there's an actual
+  reason to (e.g. being asked to double-check), it just stops doing so reflexively.
+
   Azure OpenAI model availability (gpt-4o/gpt-5 family) is **regional**, not a subscription-wide gate — many
   regions (this project's original `westus2` resource included) have zero OpenAI-format models in their catalog,
   only third-party ones (Meta, Microsoft, Cohere, DeepSeek, xAI, etc). `eastus` reliably has the full OpenAI

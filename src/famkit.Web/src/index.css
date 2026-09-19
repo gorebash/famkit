@@ -425,6 +425,12 @@ textarea {
   padding: 0.75rem;
 }
 
+.chat-panel-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 0.25rem;
+}
+
 .chat-transcript {
   flex: 1;
   overflow-y: auto;

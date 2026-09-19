@@ -8,7 +8,6 @@ import type {
   MealPlanResponse,
   MealType,
   PrepTime,
-  ChatMessage,
   ChatResponse,
 } from './types'
 
@@ -89,10 +88,10 @@ export const api = {
 
   suggestMealPlan: () => request<MealPlanResponse>('/mealplan/suggest', { method: 'POST' }),
 
-  chat: (messages: ChatMessage[]) =>
+  chat: (message: string, previousResponseId?: string) =>
     request<ChatResponse>('/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages.map((m) => ({ role: m.role, content: m.content })) }),
+      body: JSON.stringify({ message, previousResponseId }),
     }),
 }
