@@ -14,13 +14,14 @@ export function HomePage() {
   return (
     <div className="home-page">
       <section className="home-chat-section">
-        <h2>Ask FamKit</h2>
         <ChatPanel />
       </section>
 
       <section className="home-pantry-section">
-        <h2>Pantry &amp; Fridge</h2>
-        <PantryPanel />
+        <div className="chat-panel">
+          <h2>Pantry &amp; Fridge</h2>
+          <PantryPanel />
+        </div>
       </section>
     </div>
   )

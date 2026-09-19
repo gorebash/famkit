@@ -29,4 +29,8 @@
     <None Include="Prompts\**\*.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="local.settings.json" />
+  </ItemGroup>
+
 </Project>

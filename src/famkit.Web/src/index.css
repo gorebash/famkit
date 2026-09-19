@@ -419,7 +419,6 @@ textarea {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  height: 480px;
   background: #faf7f0;
   border: 1px solid #e5e2db;
   border-radius: 10px;
